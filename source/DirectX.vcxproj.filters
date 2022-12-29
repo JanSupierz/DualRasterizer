@@ -1,0 +1,121 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Math">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Misc">
+      <UniqueIdentifier>{72056cb6-72a2-42b7-b05e-376f1ddd957e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="DataTypes">
+      <UniqueIdentifier>{3404dae6-8382-4a83-ab42-54829ef52a27}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="DataTypes\Effects">
+      <UniqueIdentifier>{247a3bf3-2919-46da-96f2-de510fee1cc8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="DataTypes\Meshes">
+      <UniqueIdentifier>{2da376c5-7aeb-4b6e-9337-08fb5e0cf65a}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Vector3.h">
+      <Filter>Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Matrix.h">
+      <Filter>Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Vector4.h">
+      <Filter>Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Math.h">
+      <Filter>Math</Filter>
+    </ClInclude>
+    <ClInclude Include="MathHelpers.h">
+      <Filter>Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Timer.h">
+      <Filter>Misc</Filter>
+    </ClInclude>
+    <ClInclude Include="Vector2.h">
+      <Filter>Math</Filter>
+    </ClInclude>
+    <ClInclude Include="pch.h" />
+    <ClInclude Include="ColorRGB.h">
+      <Filter>Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Texture.h">
+      <Filter>DataTypes</Filter>
+    </ClInclude>
+    <ClInclude Include="Effect.h">
+      <Filter>DataTypes\Effects</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer.h" />
+    <ClInclude Include="Camera.h">
+      <Filter>DataTypes</Filter>
+    </ClInclude>
+    <ClInclude Include="Sampler.h">
+      <Filter>DataTypes</Filter>
+    </ClInclude>
+    <ClInclude Include="Utils.h" />
+    <ClInclude Include="Mesh.h">
+      <Filter>DataTypes\Meshes</Filter>
+    </ClInclude>
+    <ClInclude Include="MeshTransparent.h">
+      <Filter>DataTypes\Meshes</Filter>
+    </ClInclude>
+    <ClInclude Include="MeshOpaque.h">
+      <Filter>DataTypes\Meshes</Filter>
+    </ClInclude>
+    <ClInclude Include="EffectTransparent.h">
+      <Filter>DataTypes\Effects</Filter>
+    </ClInclude>
+    <ClInclude Include="EffectOpaque.h">
+      <Filter>DataTypes\Effects</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="main.cpp" />
+    <ClCompile Include="Vector3.cpp">
+      <Filter>Math</Filter>
+    </ClCompile>
+    <ClCompile Include="Matrix.cpp">
+      <Filter>Math</Filter>
+    </ClCompile>
+    <ClCompile Include="Vector4.cpp">
+      <Filter>Math</Filter>
+    </ClCompile>
+    <ClCompile Include="Timer.cpp">
+      <Filter>Misc</Filter>
+    </ClCompile>
+    <ClCompile Include="Vector2.cpp">
+      <Filter>Math</Filter>
+    </ClCompile>
+    <ClCompile Include="pch.cpp" />
+    <ClCompile Include="Texture.cpp">
+      <Filter>DataTypes</Filter>
+    </ClCompile>
+    <ClCompile Include="Effect.cpp">
+      <Filter>DataTypes\Effects</Filter>
+    </ClCompile>
+    <ClCompile Include="Renderer.cpp" />
+    <ClCompile Include="Sampler.cpp">
+      <Filter>DataTypes</Filter>
+    </ClCompile>
+    <ClCompile Include="Mesh.cpp">
+      <Filter>DataTypes\Meshes</Filter>
+    </ClCompile>
+    <ClCompile Include="MeshTransparent.cpp">
+      <Filter>DataTypes\Meshes</Filter>
+    </ClCompile>
+    <ClCompile Include="MeshOpaque.cpp">
+      <Filter>DataTypes\Meshes</Filter>
+    </ClCompile>
+    <ClCompile Include="EffectTransparent.cpp">
+      <Filter>DataTypes\Effects</Filter>
+    </ClCompile>
+    <ClCompile Include="EffectOpaque.cpp">
+      <Filter>DataTypes\Effects</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>
