@@ -1,2 +1,2 @@
-# DuoRasterizer
+# DualRasterizer
  
