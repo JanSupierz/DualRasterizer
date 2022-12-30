@@ -29,7 +29,7 @@ public:
 	// Member functions						
 	//-------------------------------------------------
 	void VertexTransformationFunction(const std::vector<Vertex>& vertices, std::vector<VertexOut>& verticesOut, const std::vector<uint32_t>& indices);
-	void PixelShading(const VertexOut& v, int width, int height, SDL_Surface* pBackBuffer, uint32_t* pBackBufferPixels) const;
+	void PixelShading(const VertexOut& v, int width, int height, SDL_Surface* pBackBuffer, uint32_t* pBackBufferPixels, bool useNormalMap, RenderMode renderMode) const;
 
 	virtual void SetMatrices(dae::Camera* pCamera, const dae::Matrix& worldMatrix) override;
 
@@ -39,6 +39,7 @@ public:
 	void SetGlossinessMap(Texture* pGlossinessTexture);
 
 private:
+	float Phong(float ks, float exp, const dae::Vector3& l, const dae::Vector3& v, const dae::Vector3 n) const;
 
 	//-------------------------------------------------
 	// Datamembers								

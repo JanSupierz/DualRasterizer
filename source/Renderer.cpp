@@ -61,6 +61,8 @@ namespace dae {
 
 		m_pFireMesh->SetMatrices(m_pCamera.get());
 		m_pFireMesh->SetSamplerState(m_pSampler->GetSamplerState(D3D11_FILTER_MIN_MAG_MIP_POINT));
+
+		SetBackColor();
 	}
 
 	Renderer::~Renderer()
@@ -133,27 +135,51 @@ namespace dae {
 			const int nrPixels{ m_Width * m_Height };
 			std::fill_n(m_pDepthBufferPixels, nrPixels, INFINITY);
 
-			SDL_FillRect(m_pBackBuffer, NULL, SDL_MapRGB(m_pBackBuffer->format, 100, 100, 100));
+			SDL_FillRect(m_pBackBuffer, NULL, SDL_MapRGB(m_pBackBuffer->format, static_cast<Uint8>(m_BackColor.r * 255.f), static_cast<Uint8>(m_BackColor.g * 255.f), static_cast<Uint8>(m_BackColor.b * 255.f)));
 
 			//DrawCalls
 			m_pVehicleMesh->SoftwareRender(m_Width, m_Height, m_pBackBuffer, m_pBackBufferPixels, m_pDepthBufferPixels);
-			m_pFireMesh->SoftwareRender(m_Width, m_Height, m_pBackBuffer, m_pBackBufferPixels, m_pDepthBufferPixels);
+
+			if (m_ShowFireMesh)
+			{
+				m_pFireMesh->SoftwareRender(m_Width, m_Height, m_pBackBuffer, m_pBackBufferPixels, m_pDepthBufferPixels);
+			}
+
+			if (m_ShowDepth)
+			{
+				for (int px{ 0 }; px <= m_Width - 1; ++px)
+				{
+					for (int py{ 0 }; py <= m_Height - 1; ++py)
+					{
+						const float remappedDepth{ 255.f * dae::Remap(m_pDepthBufferPixels[static_cast<int>(px) + (static_cast<int>(py) * m_Width)],0.995f) };
+
+						m_pBackBufferPixels[static_cast<int>(px) + (static_cast<int>(py) * m_Width)] = SDL_MapRGB(m_pBackBuffer->format,
+							static_cast<uint8_t>(remappedDepth),
+							static_cast<uint8_t>(remappedDepth),
+							static_cast<uint8_t>(remappedDepth));
+					}
+				}
+			}
 
 			//Update SDL Surface
 			SDL_UnlockSurface(m_pBackBuffer);
 			SDL_BlitSurface(m_pBackBuffer, 0, m_pFrontBuffer, 0);
+
 			SDL_UpdateWindowSurface(m_pWindow);
 		}
 		else if(m_IsInitialized)
 		{
 			//1. Clear RTV & DSV
-			ColorRGB clearColor{ 0.f,0.f,0.3f };
-			m_pDeviceContext->ClearRenderTargetView(m_pRenderTargetView, &clearColor.r);
+			m_pDeviceContext->ClearRenderTargetView(m_pRenderTargetView, &m_BackColor.r);
 			m_pDeviceContext->ClearDepthStencilView(m_pDepthStencilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.f, 0);
 
 			//2. Set Pipeline + Invoke DrawCalls
 			m_pVehicleMesh->Render(m_pDeviceContext);
-			m_pFireMesh->Render(m_pDeviceContext);
+
+			if (m_ShowFireMesh)
+			{
+				m_pFireMesh->Render(m_pDeviceContext);
+			}
 
 			//3. Present Backbuffer (Swap)
 			m_pSwapChain->Present(0, 0);
@@ -166,6 +192,8 @@ namespace dae {
 
 	void Renderer::ToggleFilteringMethods()
 	{
+
+
 		if (m_FilteringMethod == FilteringMethod::Anisotropic)
 		{
 			m_FilteringMethod = FilteringMethod::Point;
@@ -178,6 +206,7 @@ namespace dae {
 		ID3D11SamplerState* samplerState{};
 
 		std::cout << "----------------------------\n";
+		std::cout << "HARDWARE: ";
 
 		switch (m_FilteringMethod)
 		{
@@ -218,6 +247,147 @@ namespace dae {
 		std::cout << "----------------------------\n";
 		std::cout << "VERSION: " << (m_IsSoftware ? "SOFTWARE" : "HARDWARE") << '\n';
 		std::cout << "----------------------------\n";
+
+		SetBackColor();
+	}
+
+	void Renderer::ToggleCullMode()
+	{
+		if (m_CullMode == CullMode::NoCulling)
+		{
+			m_CullMode = CullMode::BackFaceCulling;
+		}
+		else
+		{
+			m_CullMode = static_cast<CullMode>(static_cast<int>(m_CullMode) + 1);
+		}
+
+		std::cout << "----------------------------\n";
+
+		switch (m_CullMode)
+		{
+		case CullMode::FrontFaceCulling:
+			std::cout << "FRONT FACE CULLING\n";
+			break;
+		case CullMode::BackFaceCulling:
+			std::cout << "BACK FACE CULLING\n";
+			break;
+		case CullMode::NoCulling:
+			std::cout << "NO CULLING\n";
+			break;
+		}
+
+		std::cout << "----------------------------\n";
+
+		//Only the vehicle has a cull mode that can be changed
+		m_pVehicleMesh->SetCullMode(m_CullMode);
+	}
+
+	void Renderer::ToggleUniformClearColor()
+	{
+		m_IsUniformBackground = !m_IsUniformBackground;
+
+		std::cout << "----------------------------\n";
+		std::cout << "UNIFORM BACKGROUND: " << (m_IsUniformBackground ? "ON" : "OFF") << '\n';
+		std::cout << "----------------------------\n";
+
+		SetBackColor();
+	}
+
+	void Renderer::ToggleFireMesh()
+	{
+		m_ShowFireMesh = !m_ShowFireMesh;
+
+		std::cout << "----------------------------\n";
+		std::cout << "FIRE FX: " << (m_ShowFireMesh ? "ON" : "OFF") << '\n';
+		std::cout << "----------------------------\n";
+	}
+
+	void Renderer::ToggleUseNormalMap()
+	{
+		m_UseNormalMap = !m_UseNormalMap;
+
+		std::cout << "----------------------------\n";
+		std::cout << "SOFTWARE: NORMAL MAP: " << (m_UseNormalMap ? "ON" : "OFF") << '\n';
+		std::cout << "----------------------------\n";
+
+		m_pVehicleMesh->SetUseNormalMap(m_UseNormalMap);
+	}
+
+	void Renderer::ToggleBoundingBoxVisualization()
+	{
+		m_ShowBoundingBox = !m_ShowBoundingBox;
+
+		std::cout << "----------------------------\n";
+		std::cout << "SOFTWARE: BOUNDING BOX VISIBLE: " << (m_ShowBoundingBox ? "ON" : "OFF") << '\n';
+		std::cout << "----------------------------\n";
+
+		m_pVehicleMesh->SetBoundingBoxVisibitily(m_ShowBoundingBox);
+		m_pFireMesh->SetBoundingBoxVisibitily(m_ShowBoundingBox);
+	}
+
+	void Renderer::ToggleDepthBufferVisualization()
+	{
+		m_ShowDepth = !m_ShowDepth;
+
+		std::cout << "----------------------------\n";
+		std::cout << "SOFTWARE: DEPTH BUFFER VISIBLE: " << (m_ShowDepth ? "ON" : "OFF") << '\n';
+		std::cout << "----------------------------\n";
+
+		m_pVehicleMesh->SetDepthVisibility(m_ShowDepth);
+		m_pFireMesh->SetDepthVisibility(m_ShowDepth);
+	}
+
+	void Renderer::ToggleRenderMode()
+	{
+		if (m_RenderMode == RenderMode::Specular)
+		{
+			m_RenderMode = RenderMode::Combined;
+		}
+		else
+		{
+			m_RenderMode = static_cast<RenderMode>(static_cast<int>(m_RenderMode) + 1);
+		}
+
+		std::cout << "----------------------------\n";
+		std::cout << "SOFTWARE: SHADING: ";
+
+		switch (m_RenderMode)
+		{
+		case RenderMode::Combined:
+			std::cout << "COMBINED\n";
+			break;
+		case RenderMode::ObservedArea:
+			std::cout << "OBSERVED AREA\n";
+			break;
+		case RenderMode::Diffuse:
+			std::cout << "DIFFUSE\n";
+			break;
+		case RenderMode::Specular:
+			std::cout << "SPECULAR\n";
+			break;
+		}
+
+		std::cout << "----------------------------\n";
+
+		//Only the vehicle has a render mode that can be changed
+		m_pVehicleMesh->SetRenderMode(m_RenderMode);
+	}
+
+	void Renderer::SetBackColor()
+	{
+		if (m_IsUniformBackground)
+		{
+			m_BackColor = m_DarkGray;
+		}
+		else if (m_IsSoftware)
+		{
+			m_BackColor = m_LightGray;
+		}
+		else
+		{
+			m_BackColor = m_CornFlowerBlue;
+		}
 	}
 
 	HRESULT Renderer::InitializeDirectX()

@@ -129,47 +129,45 @@ void EffectOpaque::VertexTransformationFunction(const std::vector<Vertex>& verti
 	}
 }
 
-void EffectOpaque::PixelShading(const VertexOut & v, int width, int height, SDL_Surface* pBackBuffer, uint32_t* pBackBufferPixels) const
+void EffectOpaque::PixelShading(const VertexOut& v, int width, int height, SDL_Surface* pBackBuffer, uint32_t* pBackBufferPixels, bool useNormalMap, RenderMode renderMode) const
 {
-	bool m_UseNormalMap = true;
-
 	dae::ColorRGB finalColor{};
 
 	const dae::Vector3 binominal{ dae::Vector3::Cross(v.normal,v.tangent) };
 	const dae::Matrix tangentSpaceAxis{ v.tangent,binominal,v.normal,dae::Vector3::Zero };
 
-	const dae::ColorRGB normalMapSample{ m_pNormalMap->Sample(v.uv) };
+	const dae::ColorRGB normalMapSample{ m_pNormalMap->SampleRGB(v.uv) };
 
 	dae::Vector3 sampledNormal{ 2.f * normalMapSample.r - 1.f,2.f * normalMapSample.g - 1.f,2.f * normalMapSample.b - 1.f };
-	sampledNormal = (m_UseNormalMap ? tangentSpaceAxis.TransformVector(sampledNormal).Normalized() : v.normal);
+	sampledNormal = (useNormalMap ? tangentSpaceAxis.TransformVector(sampledNormal).Normalized() : v.normal);
 
 	const float observedArea{ dae::Vector3::Dot(sampledNormal,-m_LightDirection) };
 
 	if (observedArea > 0.f)
 	{
-		const dae::ColorRGB diffuse{ (m_LightIntensity * m_pDiffuseMap->Sample(v.uv)) / static_cast<float>(M_PI) };
+		const dae::ColorRGB diffuse{ (m_LightIntensity * m_pDiffuseMap->SampleRGB(v.uv)) / static_cast<float>(M_PI) };
 
-		dae::ColorRGB specular{ (m_pSpecularMap->Sample(v.uv)) * powf(std::max(dae::Vector3::Dot(-m_LightDirection - (2.f * std::max(dae::Vector3::Dot(sampledNormal, -m_LightDirection), 0.f) * sampledNormal), v.viewDirection), 0.f), m_Shininess * m_pGlossinessMap->Sample(v.uv).r) };
+		dae::ColorRGB specular{ m_pSpecularMap->SampleRGB(v.uv) * Phong(1.f,m_Shininess * m_pGlossinessMap->SampleRGB(v.uv).r,-m_LightDirection,v.viewDirection,sampledNormal) };
 
-		specular.r = std::max(0.f, specular.r);
-		specular.g = std::max(0.f, specular.g);
-		specular.b = std::max(0.f, specular.b);
+		specular.r = std::clamp(specular.r, 0.f, 1.f);
+		specular.g = std::clamp(specular.g, 0.f, 1.f);
+		specular.b = std::clamp(specular.b, 0.f, 1.f);
 
-		//switch (m_CurrentRenderMode)
-		//{
-		//case dae::Renderer::RenderMode::Combined:
+		switch (renderMode)
+		{
+		case RenderMode::Combined:
 			finalColor = observedArea * (diffuse + specular + m_Ambient);
-		//	break;
-		//case dae::Renderer::RenderMode::ObservedArea:
-		//	finalColor = { observedArea,observedArea,observedArea };
-		//	break;
-		//case dae::Renderer::RenderMode::Diffuse:
-		//	finalColor = observedArea * diffuse;
-		//	break;
-		//case dae::Renderer::RenderMode::Specular:
-		//	finalColor = observedArea * specular;
-		//	break;
-		//}
+			break;
+		case RenderMode::ObservedArea:
+			finalColor = { observedArea,observedArea,observedArea };
+			break;
+		case RenderMode::Diffuse:
+			finalColor = observedArea * diffuse;
+			break;
+		case RenderMode::Specular:
+			finalColor = observedArea * specular;
+			break;
+		}
 	}
 
 	//Update Color in Buffer
@@ -230,5 +228,10 @@ void EffectOpaque::SetGlossinessMap(Texture* pGlossinessTexture)
 	m_pGlossinessMap = pGlossinessTexture;
 
 	std::wcout << L"Glossines map: OK\n";
+}
+
+float EffectOpaque::Phong(float ks, float exp, const dae::Vector3& l, const dae::Vector3& v, const dae::Vector3 n) const
+{		
+	return powf(std::max(dae::Vector3::Dot(l - (2.f * std::max(dae::Vector3::Dot(n, l), 0.f) * n), v), 0.f), exp);
 }
 

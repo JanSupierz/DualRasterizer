@@ -73,12 +73,13 @@ void EffectTransparent::VertexTransformationFunction(const std::vector<Vertex>& 
 
 void EffectTransparent::PixelShading(const VertexOut& v, int width, int height, SDL_Surface* pBackBuffer, uint32_t* pBackBufferPixels) const
 {
+	//Sample the cololr from texture
 	dae::Vector4 sample{ m_pDiffuseMap->SampleRGBA(v.uv) };
 
-	if (sample.x < 0.4f) return; //Black lines fix
-
+	//Sample the color from screen
 	SDL_GetRGB(pBackBufferPixels[static_cast<int>(v.position.x) + (static_cast<int>(v.position.y) * width)], pBackBuffer->format, m_pRed, m_pGreen, m_pBlue);
 
+	//Calculate blended color
 	const float inverseAlpha{ 1.f - sample.w };
 	const float division{ 1 / 255.f };
 
@@ -89,6 +90,7 @@ void EffectTransparent::PixelShading(const VertexOut& v, int width, int height, 
 		sample.z * sample.w + *m_pBlue * inverseAlpha * division
 	};
 
+	//Set color
 	finalColor.MaxToOne();
 
 	pBackBufferPixels[static_cast<int>(v.position.x) + (static_cast<int>(v.position.y) * width)] = SDL_MapRGB(pBackBuffer->format,

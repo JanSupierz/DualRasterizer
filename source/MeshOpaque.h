@@ -34,4 +34,12 @@ public:
 	void SetNormalMap(Texture* pNormalMap);
 	void SetSpecularMap(Texture* pSpecularMap);
 	void SetGlossinessMap(Texture* pGlossinessMap);
+
+	void SetCullMode(CullMode cullMode);
+	void SetUseNormalMap(bool useNormalMap);
+	void SetRenderMode(RenderMode renderMode);
+
+private:
+	bool m_UseNormalMap{ true };
+	RenderMode m_RenderMode{ RenderMode::Combined };
 };

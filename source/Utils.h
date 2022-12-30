@@ -8,27 +8,85 @@ namespace dae
 {
 	namespace Utils
 	{
-		inline bool IsPixelInTriangle(const Vector2& pixelVector, const Vector2& v0, const Vector2& v1, const Vector2& v2, Vector3& ratio, const bool shouldSwap)
+		inline bool IsPixelInTriangle(const Vector2& pixelVector, const Vector2& v0, const Vector2& v1, const Vector2& v2, Vector3& ratio, const bool shouldSwap, CullMode cullMode)
 		{
-			const int swapFactor{ (-1 * shouldSwap + !shouldSwap) }; //1 bij list of even indices van strip, -1 bij oneven indices van strip
+			const int swapFactor{ (-1 * shouldSwap + !shouldSwap) }; //1 bij list of even indices van een strip, -1 bij oneven indices van een strip
 
-			Vector2 currentEdge{ v2 - v1 };
-			const float firstArea{ swapFactor * Vector2::Cross(currentEdge, pixelVector - v1) };
-			if (firstArea < 0.f) return false;
+			switch (cullMode)
+			{
+			case CullMode::BackFaceCulling:
+			{
+				Vector2 currentEdge{ v2 - v1 };
+				const float firstArea{ swapFactor * Vector2::Cross(currentEdge, pixelVector - v1) };
+				if (firstArea < 0.f) return false;
 
-			currentEdge = v0 - v2;
-			const float secondArea{ swapFactor * Vector2::Cross(currentEdge, pixelVector - v2) };
-			if (secondArea < 0.f) return false;
+				currentEdge = v0 - v2;
+				const float secondArea{ swapFactor * Vector2::Cross(currentEdge, pixelVector - v2) };
+				if (secondArea < 0.f) return false;
 
-			currentEdge = v1 - v0;
-			const float thirdArea{ swapFactor * Vector2::Cross(currentEdge, pixelVector - v0) };
-			if (thirdArea < 0.f) return false;
+				currentEdge = v1 - v0;
+				const float thirdArea{ swapFactor * Vector2::Cross(currentEdge, pixelVector - v0) };
+				if (thirdArea < 0.f) return false;
 
-			const float inverseTotalArea{ swapFactor / (firstArea + secondArea + thirdArea) };
+				const float inverseTotalArea{ swapFactor / (firstArea + secondArea + thirdArea) };
 
-			ratio.x = firstArea * inverseTotalArea;
-			ratio.y = secondArea * inverseTotalArea;
-			ratio.z = thirdArea * inverseTotalArea;
+				ratio.x = firstArea * inverseTotalArea;
+				ratio.y = secondArea * inverseTotalArea;
+				ratio.z = thirdArea * inverseTotalArea;
+				break;
+			}
+			case CullMode::FrontFaceCulling:
+			{
+				Vector2 currentEdge{ v2 - v1 };
+				const float firstArea{ swapFactor * Vector2::Cross(currentEdge, pixelVector - v1) };
+				if (firstArea > 0.f) return false;
+
+				currentEdge = v0 - v2;
+				const float secondArea{ swapFactor * Vector2::Cross(currentEdge, pixelVector - v2) };
+				if (secondArea > 0.f) return false;
+
+				currentEdge = v1 - v0;
+				const float thirdArea{ swapFactor * Vector2::Cross(currentEdge, pixelVector - v0) };
+				if (thirdArea > 0.f) return false;
+
+				const float inverseTotalArea{ -1 * swapFactor / (firstArea + secondArea + thirdArea) };
+
+				ratio.x = firstArea * inverseTotalArea;
+				ratio.y = secondArea * inverseTotalArea;
+				ratio.z = thirdArea * inverseTotalArea;
+				break;
+			}
+			case CullMode::NoCulling:
+			{
+				bool shouldFlipSign{ false };
+
+				Vector2 currentEdge{ v2 - v1 };
+				const float firstArea{ swapFactor * Vector2::Cross(currentEdge, pixelVector - v1) };
+
+				currentEdge = v0 - v2;
+				const float secondArea{ swapFactor * Vector2::Cross(currentEdge, pixelVector - v2) };
+
+				currentEdge = v1 - v0;
+				const float thirdArea{ swapFactor * Vector2::Cross(currentEdge, pixelVector - v0) };
+
+				if ((firstArea < 0.f && secondArea < 0.f && thirdArea < 0.f) || (firstArea > 0.f && secondArea > 0.f && thirdArea > 0.f))
+				{
+					const float inverseTotalArea{ swapFactor / (firstArea + secondArea + thirdArea) };
+
+					ratio.x = abs(firstArea * inverseTotalArea);
+					ratio.y = abs(secondArea * inverseTotalArea);
+					ratio.z = abs(thirdArea * inverseTotalArea);
+				}
+				else
+				{
+					return false;
+				}
+
+
+				break;
+			}
+			}
+
 
 			return true;
 		}

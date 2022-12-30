@@ -40,9 +40,12 @@ int main(int argc, char* args[])
 	const auto pTimer = new Timer();
 	const auto pRenderer = new Renderer(pWindow);
 
+	bool printFPS = false;
+
 	//Start loop
 	pTimer->Start();
 	float printTimer = 0.f;
+
 	bool isLooping = true;
 	while (isLooping)
 	{
@@ -56,12 +59,34 @@ int main(int argc, char* args[])
 				isLooping = false;
 				break;
 			case SDL_KEYUP:
-				if (e.key.keysym.scancode == SDL_SCANCODE_F3)
-					pRenderer->ToggleFilteringMethods();
-				if (e.key.keysym.scancode == SDL_SCANCODE_F6)
-					pRenderer->ToggleRotation();
-				if (e.key.keysym.scancode == SDL_SCANCODE_F4)
+				if (e.key.keysym.scancode == SDL_SCANCODE_F1)
 					pRenderer->ToggleVersion();
+				if (e.key.keysym.scancode == SDL_SCANCODE_F2)
+					pRenderer->ToggleRotation();
+				if (e.key.keysym.scancode == SDL_SCANCODE_F3)
+					pRenderer->ToggleFireMesh();
+				if (e.key.keysym.scancode == SDL_SCANCODE_F4)
+					pRenderer->ToggleFilteringMethods();
+				if (e.key.keysym.scancode == SDL_SCANCODE_F5)
+					pRenderer->ToggleRenderMode();
+				if (e.key.keysym.scancode == SDL_SCANCODE_F6)
+					pRenderer->ToggleUseNormalMap();
+				if (e.key.keysym.scancode == SDL_SCANCODE_F7)
+					pRenderer->ToggleDepthBufferVisualization();
+				if (e.key.keysym.scancode == SDL_SCANCODE_F8)
+					pRenderer->ToggleBoundingBoxVisualization();
+				if (e.key.keysym.scancode == SDL_SCANCODE_F9)
+					pRenderer->ToggleCullMode();
+				if (e.key.keysym.scancode == SDL_SCANCODE_F10)
+					pRenderer->ToggleUniformClearColor();
+				if (e.key.keysym.scancode == SDL_SCANCODE_F11)
+				{
+					printFPS = !printFPS;
+
+					std::cout << "----------------------------\n";
+					std::cout << "PRINT FPS: " << (printFPS ? "ON" : "OFF") << '\n';
+					std::cout << "----------------------------\n";
+				}
 				break;
 			default: ;
 			}
@@ -76,7 +101,8 @@ int main(int argc, char* args[])
 		//--------- Timer ---------
 		pTimer->Update();
 		printTimer += pTimer->GetElapsed();
-		if (printTimer >= 1.f)
+
+		if (printTimer >= 1.f && printFPS)
 		{
 			printTimer = 0.f;
 			std::cout << "dFPS: " << pTimer->GetdFPS() << std::endl;

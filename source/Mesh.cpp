@@ -18,6 +18,11 @@ Mesh::Mesh(ID3D11Device* pDevice, const std::string& filename)
 	dae::Utils::ParseOBJ(filename, m_Vertices, m_Indices);
 	m_VerticesOut.resize(m_Vertices.size());
 
+	m_IsTriangleList = { m_PrimitiveTopology == PrimitiveTopology::TriangleList };
+
+	m_Increment = m_IsTriangleList * 3 + !m_IsTriangleList * 1;
+	m_MaxCount = static_cast<int>(m_Indices.size()) + !m_IsTriangleList * (-2);
+
 	//Create Vertex Buffer
 	D3D11_BUFFER_DESC bd{};
 	bd.Usage = D3D11_USAGE_IMMUTABLE;
@@ -109,6 +114,16 @@ void Mesh::Translate(const dae::Vector3& translation)
 void Mesh::RotateY(float angle)
 {
 	m_WorldMatrix = dae::Matrix::CreateRotationY(angle) * m_WorldMatrix;
+}
+
+void Mesh::SetBoundingBoxVisibitily(bool showBoundingBox)
+{
+	m_ShowBoundingbox = showBoundingBox;
+}
+
+void Mesh::SetDepthVisibility(bool showDepth)
+{
+	m_ShowDepth = showDepth;
 }
 
 

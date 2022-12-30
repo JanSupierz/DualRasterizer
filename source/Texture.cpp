@@ -44,20 +44,10 @@ Texture::Texture(ID3D11Device* pDevice, const std::string& path)
 	if (FAILED(result)) assert(false);
 
 	m_pSurfacePixels = (uint32_t*)m_pSurface->pixels;
-
-	m_pRed = new Uint8;
-	m_pGreen = new Uint8;
-	m_pBlue = new Uint8;
-	m_pAlpha = new Uint8;
 }
 
 Texture::~Texture()
 {
-	delete m_pRed;
-	delete m_pGreen;
-	delete m_pBlue;
-	delete m_pAlpha;
-
 	m_pSRV->Release();
 	m_pResource->Release();
 
@@ -73,18 +63,34 @@ ID3D11ShaderResourceView* Texture::GetResource() const
 	return m_pSRV;
 }
 
-dae::ColorRGB Texture::Sample(const dae::Vector2& uv) const
+dae::ColorRGB Texture::SampleRGB(const dae::Vector2& uv) const
 {
-	//Sample the correct texel for the given uv
-	SDL_GetRGB(m_pSurfacePixels[static_cast<Uint32>(int(uv.x * m_pSurface->w) + int(uv.y * m_pSurface->h) * m_pSurface->w)], m_pSurface->format, m_pRed, m_pGreen, m_pBlue);
+	Uint8 red{}, green{}, blue{};
 
-	return { *m_pRed / 255.f, *m_pGreen / 255.f, *m_pBlue / 255.f };
+	//clamp between 0 and 1
+	const float u{ std::clamp(uv.x,0.f,1.f) };
+	const float v{ std::clamp(uv.y,0.f,1.f) };
+
+	//Sample the correct texel for the given uv
+	SDL_GetRGB(m_pSurfacePixels[static_cast<Uint32>(int(u * m_pSurface->w) + int(v * m_pSurface->h) * m_pSurface->w)], m_pSurface->format, &red, &green, &blue);
+
+	constexpr float division{ 1.f / 255.f };
+
+	return { red * division, green * division, blue * division };
 }
 
 dae::Vector4 Texture::SampleRGBA(const dae::Vector2& uv) const
 {
-	//Sample the correct texel for the given uv
-	SDL_GetRGBA(m_pSurfacePixels[static_cast<Uint32>(int(uv.x * m_pSurface->w) + int(uv.y * m_pSurface->h) * m_pSurface->w)], m_pSurface->format, m_pRed, m_pGreen, m_pBlue, m_pAlpha);
+	Uint8 red{}, green{}, blue{}, alpha{};
 
-	return { *m_pRed / 255.f, *m_pGreen / 255.f, *m_pBlue / 255.f, *m_pAlpha / 255.f };
+	//clamp between 0 and 1
+	const float u{ std::clamp(uv.x,0.f,1.f) };
+	const float v{ std::clamp(uv.y,0.f,1.f) };
+
+	//Sample the correct texel for the given uv
+	SDL_GetRGBA(m_pSurfacePixels[static_cast<Uint32>(int(u * m_pSurface->w) + int(v * m_pSurface->h) * m_pSurface->w)], m_pSurface->format, &red, &green, &blue, &alpha);
+
+	constexpr float division{ 1.f / 255.f };
+
+	return { red * division, green * division, blue * division, alpha * division };
 }

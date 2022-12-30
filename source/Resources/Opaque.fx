@@ -76,7 +76,7 @@ VS_OUTPUT VS(VS_INPUT input)
 
 	output.UV = input.UV;
 
-    output.Normal = normalize(mul(normalize(input.Normal), (float3x3)gWorld));
+    output.Normal = mul(normalize(input.Normal), (float3x3)gWorld);
 	output.Tangent = mul(normalize(input.Tangent), (float3x3)gWorld);
 
     return output;
@@ -99,10 +99,10 @@ float Phong(float ks, float exp, float3 l, float3 v, float3 n)
 float4 PS(VS_OUTPUT input) : SV_TARGET
 {
     float3 binormal = cross(input.Normal, input.Tangent);
-	float4x4 tangentSpaceAxis = float4x4(float4(input.Tangent, 0.0f), float4(binormal, 0.0f), float4(input.Normal, 0.f), float4(0.f, 0.f, 0.f, 1.f));
+	float4x4 tangentSpaceAxis = float4x4(float4(input.Tangent, 0.f), float4(binormal, 0.f), float4(input.Normal, 0.f), float4(0.f, 0.f, 0.f, 1.f));
 
 	float3 sampledNormal = (2.f * gNormalMap.Sample(gSamplerState, input.UV).rgb) - float3(1.f, 1.f, 1.f);
-    sampledNormal = mul(normalize(float4(sampledNormal, 0.f)), tangentSpaceAxis);
+    sampledNormal = mul(normalize(float4(sampledNormal, 0.f)), (float4x4)tangentSpaceAxis);
 
 	float3 viewDirection = normalize(input.WorldPosition.xyz - gViewInverse[3].xyz);
 
@@ -111,6 +111,7 @@ float4 PS(VS_OUTPUT input) : SV_TARGET
     float3 diffuse = gLightIntensity * Diffuse(1.f, gDiffuseMap.Sample(gSamplerState, input.UV));
     float3 specular = gSpecularMap.Sample(gSamplerState, input.UV) * Phong(1.f, gShininess * gGlossinessMap.Sample(gSamplerState, input.UV).r, -gLightDirection, viewDirection, sampledNormal);
     
+    //return float4(observedArea * specular,1.f);
     return float4(observedArea * (diffuse + specular + gAmbient), 1.f);
 }
 

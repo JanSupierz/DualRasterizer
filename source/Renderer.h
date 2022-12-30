@@ -1,4 +1,5 @@
 #pragma once
+#include "DataTypes.h"
 struct SDL_Window;
 struct SDL_Surface;
 struct Vertex;
@@ -7,6 +8,7 @@ class Sampler;
 class MeshOpaque;
 class MeshTransparent;
 class Texture;
+
 
 namespace dae
 {
@@ -29,9 +31,25 @@ namespace dae
 		void ToggleFilteringMethods();
 		void ToggleRotation();
 		void ToggleVersion();
+		void ToggleCullMode();
+		void ToggleUniformClearColor();
+		void ToggleFireMesh();
+		void ToggleUseNormalMap();
+		void ToggleBoundingBoxVisualization();
+		void ToggleDepthBufferVisualization();
+		void ToggleRenderMode();
 
 	private:
-		void SoftwareRender() const;
+
+		////////////////////////////////////////////////////
+		//	Helper Functions
+		////////////////////////////////////////////////////
+
+		void SetBackColor();
+
+		////////////////////////////////////////////////////
+		//	Variables
+		////////////////////////////////////////////////////
 
 		//Window
 		SDL_Window* m_pWindow{};
@@ -61,11 +79,6 @@ namespace dae
 		ID3D11Resource* m_pRenderTargetBuffer;
 		ID3D11RenderTargetView* m_pRenderTargetView;
 
-		//Meshes
-		std::unique_ptr<MeshOpaque> m_pVehicleMesh;
-		std::unique_ptr<MeshTransparent> m_pFireMesh;
-		bool m_ShouldRotate{ true };
-
 		//Camera
 		std::unique_ptr<Camera> m_pCamera;
 
@@ -77,13 +90,38 @@ namespace dae
 
 		std::unique_ptr<Texture> m_pFireDiffuseMap;
 
+		////////////////////////////////////////////////////
+		//	Demonstration variables
+		////////////////////////////////////////////////////
+
+		bool m_IsSoftware{ false };
+		bool m_ShouldRotate{ true };
+		bool m_ShowFireMesh{ true };
+		bool m_UseNormalMap{ true };
+		bool m_ShowBoundingBox{ false };
+		bool m_ShowDepth{ false };
+		
+		//Cull Mode
+		CullMode m_CullMode{ CullMode::BackFaceCulling };
+
+		//Render Mode
+		RenderMode m_RenderMode{ RenderMode::Combined };
+
+		//Color
+		ColorRGB m_BackColor{};
+		const ColorRGB m_DarkGray{ 0.1f,0.1f,0.1f };
+		const ColorRGB m_CornFlowerBlue{ 0.39f, 0.59f, 0.93f };
+		const ColorRGB m_LightGray{ 0.39f, 0.39f, 0.39f };
+		bool m_IsUniformBackground{ false };
+
 		//Sampling
 		std::unique_ptr<Sampler> m_pSampler;
 
 		enum class FilteringMethod { Point, Linear, Anisotropic };
 		FilteringMethod m_FilteringMethod{ FilteringMethod::Point };
 
-		//Key-bindings
-		bool m_IsSoftware{ true };
+		//Meshes
+		std::unique_ptr<MeshOpaque> m_pVehicleMesh;
+		std::unique_ptr<MeshTransparent> m_pFireMesh;
 	};
 }

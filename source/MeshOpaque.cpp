@@ -42,20 +42,17 @@ void MeshOpaque::SoftwareRender(int width, int height, SDL_Surface* pBackBuffer,
 		m_VerticesOut[index].position.y = 0.5f * (1.f - m_VerticesOut[index].position.y) * height;
 	}
 
-	const bool isTriangleList{ true }; //m_PrimitiveTopology == PrimitiveTopology::TriangleList };
-
-	const int increment{ isTriangleList * 3 + !isTriangleList * 1 };
-	const int maxCount{ static_cast<int>(m_Indices.size()) + !isTriangleList * (-2) };  //Max = nrIndices + 0 bij triangleStrip of -2 bij triangleList
-
-	for (size_t index{}; index < maxCount; index += increment)
+	for (size_t index{}; index < m_MaxCount; index += m_Increment)
 	{
 		//Frustrum culling
 		if (m_VerticesOut[m_Indices[index]].position.z < 0.f || m_VerticesOut[m_Indices[index]].position.z > 1.f ||
 			m_VerticesOut[m_Indices[index + 1]].position.z < 0.f || m_VerticesOut[m_Indices[index + 1]].position.z > 1.f ||
 			m_VerticesOut[m_Indices[index + 2]].position.z < 0.f || m_VerticesOut[m_Indices[index + 2]].position.z > 1.f) continue;
 
+		//If indices are the same, skip calculation
 		if (m_Indices[index] == m_Indices[index + 1] || m_Indices[index] == m_Indices[index + 2] || m_Indices[index + 1] == m_Indices[index + 2]) continue;
 
+		//BoundingBox calculation
 		const dae::Vector2 v0{ m_VerticesOut[m_Indices[index]].position.GetXY() };
 		const dae::Vector2 v1{ m_VerticesOut[m_Indices[index + 1]].position.GetXY() };
 		const dae::Vector2 v2{ m_VerticesOut[m_Indices[index + 2]].position.GetXY() };
@@ -74,16 +71,21 @@ void MeshOpaque::SoftwareRender(int width, int height, SDL_Surface* pBackBuffer,
 		{
 			for (int py{ std::max(0,static_cast<int>(min.y)) }; py <= std::min(height - 1, static_cast<int>(max.y)); ++py)
 			{
-				//pBackBufferPixels[static_cast<int>(px) + (static_cast<int>(py) * width)] = SDL_MapRGB(pBackBuffer->format,
-				//	static_cast<uint8_t>(255),
-				//	static_cast<uint8_t>(255),
-				//	static_cast<uint8_t>(255));			// boundingbox visualization
-				//continue;
-
-				dae::Vector3 vertexRatio{};
+				// Boundingbox visualization
+				if (m_ShowBoundingbox)
+				{
+					pBackBufferPixels[static_cast<int>(px) + (static_cast<int>(py) * width)] = SDL_MapRGB(pBackBuffer->format,
+						static_cast<uint8_t>(255),
+						static_cast<uint8_t>(255),
+						static_cast<uint8_t>(255));		
+					continue;
+				}
 
 				//Rasterization
-				if (!dae::Utils::IsPixelInTriangle(dae::Vector2{ static_cast<float>(px),static_cast<float>(py) }, v0, v1, v2, vertexRatio, !isTriangleList && index & 0x01)) continue;
+				dae::Vector3 vertexRatio{};
+				const bool shouldSwap{ !m_IsTriangleList && index & 0x01 };
+
+				if (!dae::Utils::IsPixelInTriangle(dae::Vector2{ static_cast<float>(px),static_cast<float>(py) }, v0, v1, v2, vertexRatio, shouldSwap,m_CullMode)) continue;
 
 				//Attribute Interpolation
 				const float currentDepth{ 1.f / ((vertexRatio.x / m_VerticesOut[m_Indices[index]].position.z) + (vertexRatio.y / m_VerticesOut[m_Indices[index + 1]].position.z) + (vertexRatio.z / m_VerticesOut[m_Indices[index + 2]].position.z)) };
@@ -91,6 +93,11 @@ void MeshOpaque::SoftwareRender(int width, int height, SDL_Surface* pBackBuffer,
 				if (currentDepth < pDepthBufferPixels[px + (py * width)])
 				{
 					pDepthBufferPixels[px + (py * width)] = currentDepth;
+
+					if (m_ShowDepth)
+					{
+						continue;
+					}
 
 					const float wInterpolated{ 1.f / ((vertexRatio.x * m_VerticesOut[m_Indices[index]].position.w) + (vertexRatio.y * m_VerticesOut[m_Indices[index + 1]].position.w) + (vertexRatio.z * m_VerticesOut[m_Indices[index + 2]].position.w)) };
 
@@ -121,7 +128,7 @@ void MeshOpaque::SoftwareRender(int width, int height, SDL_Surface* pBackBuffer,
 						}
 					};
 
-					pEffect->PixelShading(pixel, width, height, pBackBuffer, pBackBufferPixels);
+					pEffect->PixelShading(pixel, width, height, pBackBuffer, pBackBufferPixels, m_UseNormalMap, m_RenderMode);
 				}
 			}
 		}
@@ -153,6 +160,21 @@ void MeshOpaque::SetSpecularMap(Texture* pSpecularMap)
 void MeshOpaque::SetGlossinessMap(Texture* pGlossinessMap)
 {
 	static_cast<EffectOpaque*>(m_pEffect.get())->SetGlossinessMap(pGlossinessMap);
+}
+
+void MeshOpaque::SetCullMode(CullMode cullMode)
+{
+	m_CullMode = cullMode;
+}
+
+void MeshOpaque::SetUseNormalMap(bool useNormalMap)
+{
+	m_UseNormalMap = useNormalMap;
+}
+
+void MeshOpaque::SetRenderMode(RenderMode renderMode)
+{
+	m_RenderMode = renderMode;
 }
 
 

@@ -100,11 +100,6 @@ VS_OUTPUT VS(VS_INPUT input)
 //      Pixel Shader
 //---------------------------------------------------------------------------------
 
-float4 Diffuse(float kd, float4 sampledDiffuse)
-{
-	return kd * sampledDiffuse / gPI;
-}
-
 float4 PS(VS_OUTPUT input) : SV_TARGET
 {
     return gDiffuseMap.Sample(gSamplerState, input.UV);

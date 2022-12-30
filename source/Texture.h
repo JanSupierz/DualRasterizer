@@ -28,7 +28,7 @@ public:
 	//-------------------------------------------------
 	ID3D11ShaderResourceView* GetResource() const;
 
-	dae::ColorRGB Sample(const dae::Vector2& uv) const;
+	dae::ColorRGB SampleRGB(const dae::Vector2& uv) const;
 	dae::Vector4 SampleRGBA(const dae::Vector2& uv) const;
 private:
 	//-------------------------------------------------
@@ -38,8 +38,6 @@ private:
 	//-------------------------------------------------
 	// Datamembers								
 	//-------------------------------------------------
-	Uint8* m_pRed, * m_pGreen, * m_pBlue, * m_pAlpha;
-
 	ID3D11Texture2D* m_pResource{ nullptr };
 	ID3D11ShaderResourceView* m_pSRV{ nullptr };
 

@@ -2,6 +2,7 @@
 //-----------------------------------------------------
 // Include Files
 //-----------------------------------------------------
+#include "DataTypes.h"
 class Effect;
 class Texture;
 namespace dae
@@ -55,9 +56,10 @@ public:
 	void Translate(const dae::Vector3& translation);
 	void RotateY(float angle);
 
-	void VertexTransformationFunction(dae::Camera* pCamera);
-
 	virtual void PrintTypeName() = 0;
+
+	void SetBoundingBoxVisibitily(bool showBoundingBox);
+	void SetDepthVisibility(bool showDepth);
 protected:
 	//-------------------------------------------------
 	// Private member functions								
@@ -80,7 +82,17 @@ protected:
 	ID3D11Buffer* m_pVertexBuffer;
 	ID3D11Buffer* m_pIndexBuffer;
 
-	//Common
+	//Other
 	dae::Matrix m_WorldMatrix{};
+	bool m_ShowBoundingbox{ false };
+	bool m_ShowDepth{ false };
 
+	CullMode m_CullMode{CullMode::BackFaceCulling};
+
+	enum class PrimitiveTopology{TriangleList, TriangleStrip};
+	PrimitiveTopology m_PrimitiveTopology{ PrimitiveTopology::TriangleList };
+
+	bool m_IsTriangleList{ true };
+	int m_Increment{ 1 };
+	int m_MaxCount{};
 };
