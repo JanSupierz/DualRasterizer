@@ -34,9 +34,6 @@ namespace dae
 		Vector3 up{Vector3::UnitY};
 		Vector3 right{Vector3::UnitX};
 
-		float totalPitch{};
-		float totalYaw{};
-
 		Matrix invViewMatrix{};
 		Matrix viewMatrix{};
 		Matrix projectionMatrix{};
@@ -51,12 +48,39 @@ namespace dae
 			origin = _origin;
 		}
 
+		void Update(const Timer* pTimer)
+		{
+			const float deltaTime{ pTimer->GetElapsed() };
+
+			//Camera Update Logic
+			float movementSpeed{ 5.f };
+			float rotationSpeed{ 1/250.f };
+			
+			//Keyboard
+			HandleKeyboardInput(movementSpeed, rotationSpeed, deltaTime);
+
+			//Mouse
+			HandleMouseInput(movementSpeed, rotationSpeed, deltaTime);
+
+			//Update Matrices
+			if (hasMoved)
+			{
+				CalculateViewMatrix();
+				hasMoved = false;
+			}
+
+			if (hasChangedFov)
+			{
+				fov = tanf((fovAngle * TO_RADIANS) / 2.f);
+
+				CalculateProjectionMatrix();
+				hasChangedFov = false;
+			}
+		}
+
+	private:
 		void CalculateViewMatrix()
 		{
-			Matrix rotationMatrix{ Matrix::CreateRotation(totalPitch,totalYaw,0.f) };
-			forward = rotationMatrix.TransformVector(Vector3::UnitZ);
-			forward.Normalize();
-
 			//viewMatrix = inverse cameraToWorld
 			viewMatrix = Matrix::CreateLookAtLH(origin, forward, Vector3::UnitY);
 
@@ -66,32 +90,25 @@ namespace dae
 			right = invViewMatrix.GetAxisX();
 			up = invViewMatrix.GetAxisY();
 
-			hasMoved = false;
 			//DirectX Implementation => https://learn.microsoft.com/en-us/windows/win32/direct3d9/d3dxmatrixlookatlh
 		}
 
 		void CalculateProjectionMatrix()
 		{
 			projectionMatrix = Matrix::CreatePerspectiveFovLH(fov, aspectRatio, nearPlane, farPlane);
-			 
-			hasChangedFov = false;
+
 			//DirectX Implementation => https://learn.microsoft.com/en-us/windows/win32/direct3d9/d3dxmatrixperspectivefovlh
 		}
 
-		void Update(const Timer* pTimer)
+		void HandleKeyboardInput(float& movementSpeed, float& rotationSpeed, float deltaTime)
 		{
-			const float deltaTime{ pTimer->GetElapsed() };
-
-			//Camera Update Logic
-			float movementSpeed{ 5.f };
-			float rotationSpeed{ 0.5f };
 
 			//Keyboard Input
 			const uint8_t* pKeyboardState = SDL_GetKeyboardState(nullptr);
 
 			if (pKeyboardState[SDL_SCANCODE_LSHIFT])
 			{
-				const float factor{ 4.f };
+				constexpr float factor{ 4.f };
 
 				movementSpeed *= factor;
 				rotationSpeed *= factor;
@@ -136,51 +153,42 @@ namespace dae
 
 				hasChangedFov = true;
 			}
+		}
 
+		void HandleMouseInput(float movementSpeed, float rotationSpeed, float deltaTime)
+		{
 			//Mouse Input
 			int mouseX{}, mouseY{};
 			const uint32_t mouseState = SDL_GetRelativeMouseState(&mouseX, &mouseY);
+			
+			const float directionX{ static_cast<float>(mouseX) }, directionY{ static_cast<float>(mouseY) };
 
-			if (mouseX != 0 || mouseY != 0)
+			//Error fix when framerate is to high
+			movementSpeed *= std::max(deltaTime, 1.f / 30.f);
+			movementSpeed *= 0.5f;
+
+			//Left
+			if (mouseState & SDL_BUTTON(SDL_BUTTON_LEFT))
 			{
-				const float directionX{ static_cast<float>(std::clamp(mouseX,-1,1)) }, directionY{ static_cast<float>(std::clamp(mouseY,-1,1)) };
+				//Left + Right
+				if (mouseState & SDL_BUTTON(SDL_BUTTON_RIGHT))
+				{
+					origin -= up * directionY * movementSpeed;
+				}
+				else
+				{
+					origin += right * directionX * movementSpeed;
+					origin -= forward * directionY * movementSpeed;
+				}
 
-				if ((mouseState & SDL_BUTTON_LMASK) && (mouseState & SDL_BUTTON_RMASK))
-				{
-					origin += right * movementSpeed * directionX * deltaTime;
-					origin -= up * movementSpeed * directionY * deltaTime;
-					hasMoved = true;
-				}
-				else if (mouseState & SDL_BUTTON_LMASK)
-				{
-					totalYaw += rotationSpeed * directionX * deltaTime;
-					origin -= forward * movementSpeed * directionY * deltaTime;
-					hasMoved = true;
-				}
-				else if (mouseState & SDL_BUTTON_RMASK)
-				{
-					totalYaw += rotationSpeed * directionX * deltaTime;
-					totalPitch -= rotationSpeed * directionY * deltaTime;
-					hasMoved = true;
-				}
-				else if (mouseState)
-				{
-					origin -= forward * movementSpeed * directionY * deltaTime;
-					hasMoved = true;
-				}
+				hasMoved = true;
 			}
-
-			//Update Matrices
-			if (hasMoved)
+			else if (mouseState & SDL_BUTTON(SDL_BUTTON_RIGHT))
 			{
-				CalculateViewMatrix();
-			}
+				forward = Matrix::CreateRotationY(directionX * rotationSpeed).TransformVector(forward);
+				forward = Matrix::CreateRotationX(-directionY * rotationSpeed).TransformVector(forward);
 
-			if (hasChangedFov)
-			{
-				fov = tanf((fovAngle * TO_RADIANS) / 2.f);
-
-				CalculateProjectionMatrix();
+				hasMoved = true;
 			}
 		}
 	};
