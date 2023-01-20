@@ -54,13 +54,14 @@ namespace dae
 
 			//Camera Update Logic
 			float movementSpeed{ 5.f };
-			float rotationSpeed{ 1/250.f };
+			float rotationSpeed{ 1/300.f };
 			
 			//Keyboard
 			HandleKeyboardInput(movementSpeed, rotationSpeed, deltaTime);
 
 			//Mouse
-			HandleMouseInput(movementSpeed, rotationSpeed, deltaTime);
+			constexpr float factor{ 0.2f };
+			HandleMouseInput(factor * movementSpeed, rotationSpeed, deltaTime);
 
 			//Update Matrices
 			if (hasMoved)
@@ -165,7 +166,6 @@ namespace dae
 
 			//Error fix when framerate is to high
 			movementSpeed *= std::max(deltaTime, 1.f / 30.f);
-			movementSpeed *= 0.5f;
 
 			//Left
 			if (mouseState & SDL_BUTTON(SDL_BUTTON_LEFT))

@@ -17,10 +17,10 @@ Sampler::Sampler(ID3D11Device* pDevice)
 	samplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
 	samplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
 	samplerDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
-	samplerDesc.MipLODBias = 0;
+	samplerDesc.MipLODBias = 0.f;
 	samplerDesc.MinLOD = 0;
 	samplerDesc.MaxLOD = D3D11_FLOAT32_MAX;
-	samplerDesc.MaxAnisotropy = 16;
+	samplerDesc.MaxAnisotropy = 1;
 
 	//Point
 	samplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_POINT;
