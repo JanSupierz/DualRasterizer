@@ -8,87 +8,32 @@ namespace dae
 {
 	namespace Utils
 	{
-		inline bool IsPixelInTriangle(const Vector2& pixelVector, const Vector2& v0, const Vector2& v1, const Vector2& v2, Vector3& ratio, const bool shouldSwap, CullMode cullMode)
+		inline bool IsPixelInTriangle(const Vector2& pixelVector, const Vector2& v0, const Vector2& v1, const Vector2& v2, Vector3& ratio, const bool shouldSwap)
 		{
-			const int swapFactor{ (-1 * shouldSwap + !shouldSwap) }; //1 bij list of even indices van een strip, -1 bij oneven indices van een strip
+			const int swapFactor{ (-1 * shouldSwap + !shouldSwap) }; //TriangleList or even index of TriangleStrip = 1, Odd index of TriangleStrip =  -1
 
-			switch (cullMode)
+			Vector2 currentEdge{ v2 - v1 };
+			const float firstArea{ swapFactor * Vector2::Cross(currentEdge, pixelVector - v1) };
+
+			currentEdge = v0 - v2;
+			const float secondArea{ swapFactor * Vector2::Cross(currentEdge, pixelVector - v2) };
+
+			currentEdge = v1 - v0;
+			const float thirdArea{ swapFactor * Vector2::Cross(currentEdge, pixelVector - v0) };
+
+
+			if ((firstArea > 0.f && secondArea > 0.f && thirdArea > 0.f) || (firstArea < 0.f && secondArea < 0.f && thirdArea < 0.f))
 			{
-			case CullMode::BackFaceCulling:
-			{
-				Vector2 currentEdge{ v2 - v1 };
-				const float firstArea{ swapFactor * Vector2::Cross(currentEdge, pixelVector - v1) };
-				if (firstArea < 0.f) return false;
+				const float inverseTotalArea{  swapFactor / (firstArea + secondArea + thirdArea) };
 
-				currentEdge = v0 - v2;
-				const float secondArea{ swapFactor * Vector2::Cross(currentEdge, pixelVector - v2) };
-				if (secondArea < 0.f) return false;
+				ratio.x = abs(firstArea * inverseTotalArea);
+				ratio.y = abs(secondArea * inverseTotalArea);
+				ratio.z = abs(thirdArea * inverseTotalArea);
 
-				currentEdge = v1 - v0;
-				const float thirdArea{ swapFactor * Vector2::Cross(currentEdge, pixelVector - v0) };
-				if (thirdArea < 0.f) return false;
-
-				const float inverseTotalArea{ swapFactor / (firstArea + secondArea + thirdArea) };
-
-				ratio.x = firstArea * inverseTotalArea;
-				ratio.y = secondArea * inverseTotalArea;
-				ratio.z = thirdArea * inverseTotalArea;
-				break;
-			}
-			case CullMode::FrontFaceCulling:
-			{
-				Vector2 currentEdge{ v2 - v1 };
-				const float firstArea{ swapFactor * Vector2::Cross(currentEdge, pixelVector - v1) };
-				if (firstArea > 0.f) return false;
-
-				currentEdge = v0 - v2;
-				const float secondArea{ swapFactor * Vector2::Cross(currentEdge, pixelVector - v2) };
-				if (secondArea > 0.f) return false;
-
-				currentEdge = v1 - v0;
-				const float thirdArea{ swapFactor * Vector2::Cross(currentEdge, pixelVector - v0) };
-				if (thirdArea > 0.f) return false;
-
-				const float inverseTotalArea{ -1 * swapFactor / (firstArea + secondArea + thirdArea) };
-
-				ratio.x = firstArea * inverseTotalArea;
-				ratio.y = secondArea * inverseTotalArea;
-				ratio.z = thirdArea * inverseTotalArea;
-				break;
-			}
-			case CullMode::NoCulling:
-			{
-				bool shouldFlipSign{ false };
-
-				Vector2 currentEdge{ v2 - v1 };
-				const float firstArea{ swapFactor * Vector2::Cross(currentEdge, pixelVector - v1) };
-
-				currentEdge = v0 - v2;
-				const float secondArea{ swapFactor * Vector2::Cross(currentEdge, pixelVector - v2) };
-
-				currentEdge = v1 - v0;
-				const float thirdArea{ swapFactor * Vector2::Cross(currentEdge, pixelVector - v0) };
-
-				if ((firstArea < 0.f && secondArea < 0.f && thirdArea < 0.f) || (firstArea > 0.f && secondArea > 0.f && thirdArea > 0.f))
-				{
-					const float inverseTotalArea{ swapFactor / (firstArea + secondArea + thirdArea) };
-
-					ratio.x = abs(firstArea * inverseTotalArea);
-					ratio.y = abs(secondArea * inverseTotalArea);
-					ratio.z = abs(thirdArea * inverseTotalArea);
-				}
-				else
-				{
-					return false;
-				}
-
-
-				break;
-			}
+				return true;
 			}
 
-
-			return true;
+			return false;
 		}
 
 		//Just parses vertices and indices
@@ -182,7 +127,6 @@ namespace dae
 
 						vertices.push_back(vertex);
 						tempIndices[iFace] = uint32_t(vertices.size()) - 1;
-						indices.push_back(uint32_t(vertices.size()) - 1);
 					}
 
 					indices.push_back(tempIndices[0]);

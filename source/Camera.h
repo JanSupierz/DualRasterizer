@@ -143,7 +143,7 @@ namespace dae
 
 			if (mouseX != 0 || mouseY != 0)
 			{
-				const float directionX{ static_cast<float>(mouseX) }, directionY{ static_cast<float>(mouseY) };
+				const float directionX{ static_cast<float>(std::clamp(mouseX,-1,1)) }, directionY{ static_cast<float>(std::clamp(mouseY,-1,1)) };
 
 				if ((mouseState & SDL_BUTTON_LMASK) && (mouseState & SDL_BUTTON_RMASK))
 				{

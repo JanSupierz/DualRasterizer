@@ -4,6 +4,7 @@
 #include "MeshTransparent.h"
 #include "Texture.h"
 #include "Sampler.h"
+#include "Rasterizer.h"
 #include "Camera.h"
 #include "Utils.h"
 
@@ -14,7 +15,7 @@ namespace dae {
 	{
 		//Initialize
 		SDL_GetWindowSize(pWindow, &m_Width, &m_Height);
-
+		
 		//Create Buffers (Software)
 		m_pFrontBuffer = SDL_GetWindowSurface(pWindow);
 		m_pBackBuffer = SDL_CreateRGBSurface(0, m_Width, m_Height, 32, 0, 0, 0, 0);
@@ -39,14 +40,16 @@ namespace dae {
 		m_pCamera = std::make_unique<Camera>();
 		m_pCamera->Initialize(45.f, { 0.f,0.f,-50.f }, m_Width / static_cast<float>(m_Height));
 
+		//Init maps
 		m_pDiffuseMap = std::make_unique<Texture>(m_pDevice, "Resources/vehicle_diffuse.png");
 		m_pNormalMap = std::make_unique<Texture>(m_pDevice, "Resources/vehicle_normal.png");
 		m_pSpecularMap = std::make_unique<Texture>(m_pDevice, "Resources/vehicle_specular.png");
 		m_pGlossinessMap = std::make_unique<Texture>(m_pDevice, "Resources/vehicle_gloss.png");
-
 		m_pFireDiffuseMap = std::make_unique<Texture>(m_pDevice, "Resources/fireFX_diffuse.png");
 
+		//Init states
 		m_pSampler = std::make_unique<Sampler>(m_pDevice);
+		m_pRasterizer = std::make_unique<Rasterizer>(m_pDevice);
 
 		//Initialize Meshes
 
@@ -55,14 +58,19 @@ namespace dae {
 
 		m_pVehicleMesh->SetMatrices(m_pCamera.get());
 		m_pVehicleMesh->SetSamplerState(m_pSampler->GetSamplerState(D3D11_FILTER_MIN_MAG_MIP_POINT));
+		m_pVehicleMesh->SetRasterizerState(m_pRasterizer->GetRasterizerState(D3D11_CULL_BACK));
 
 		//Transparent
 		m_pFireMesh = std::make_unique<MeshTransparent>(m_pDevice, "Resources/fireFX.obj", m_pFireDiffuseMap.get());
 
 		m_pFireMesh->SetMatrices(m_pCamera.get());
 		m_pFireMesh->SetSamplerState(m_pSampler->GetSamplerState(D3D11_FILTER_MIN_MAG_MIP_POINT));
+		m_pFireMesh->SetRasterizerState(m_pRasterizer->GetRasterizerState(D3D11_CULL_NONE));
 
 		SetBackColor();
+		PrintStartInfo();
+
+		
 	}
 
 	Renderer::~Renderer()
@@ -113,7 +121,7 @@ namespace dae {
 
 		if (m_ShouldRotate)
 		{
-			const float angle{ pTimer->GetElapsed() };
+			const float angle{ pTimer->GetElapsed() * m_AngularSpeed };
 
 			m_pVehicleMesh->RotateY(angle);
 			m_pFireMesh->RotateY(angle);
@@ -145,6 +153,7 @@ namespace dae {
 				m_pFireMesh->SoftwareRender(m_Width, m_Height, m_pBackBuffer, m_pBackBufferPixels, m_pDepthBufferPixels);
 			}
 
+			//Depth visualisation
 			if (m_ShowDepth)
 			{
 				for (int px{ 0 }; px <= m_Width - 1; ++px)
@@ -203,7 +212,7 @@ namespace dae {
 			m_FilteringMethod = static_cast<FilteringMethod>(static_cast<int>(m_FilteringMethod) + 1);
 		}
 
-		ID3D11SamplerState* samplerState{};
+		ID3D11SamplerState* pSamplerState{};
 
 		std::cout << "----------------------------\n";
 		std::cout << "HARDWARE: ";
@@ -212,23 +221,23 @@ namespace dae {
 		{
 		case FilteringMethod::Point:
 			std::cout << "POINT FILTERING\n";
-			samplerState = m_pSampler->GetSamplerState(D3D11_FILTER_MIN_MAG_MIP_POINT);
+			pSamplerState = m_pSampler->GetSamplerState(D3D11_FILTER_MIN_MAG_MIP_POINT);
 			break;
 		case FilteringMethod::Linear:
 			std::cout << "LINEAR FILTERING\n";
-			samplerState = m_pSampler->GetSamplerState(D3D11_FILTER_MIN_MAG_MIP_LINEAR);
+			pSamplerState = m_pSampler->GetSamplerState(D3D11_FILTER_MIN_MAG_MIP_LINEAR);
 			break;
 		default:
 		case FilteringMethod::Anisotropic:
 			std::cout << "ANISOTROPIC FILTERING\n";
-			samplerState = m_pSampler->GetSamplerState(D3D11_FILTER_ANISOTROPIC);
+			pSamplerState = m_pSampler->GetSamplerState(D3D11_FILTER_ANISOTROPIC);
 			break;
 		}
 
 		std::cout << "----------------------------\n";
 
-		m_pVehicleMesh->SetSamplerState(samplerState);
-		m_pFireMesh->SetSamplerState(samplerState);
+		m_pVehicleMesh->SetSamplerState(pSamplerState);
+		m_pFireMesh->SetSamplerState(pSamplerState);
 	}
 
 	void Renderer::ToggleRotation()
@@ -264,23 +273,28 @@ namespace dae {
 
 		std::cout << "----------------------------\n";
 
+		ID3D11RasterizerState* pRasterizerState{};
+
 		switch (m_CullMode)
 		{
 		case CullMode::FrontFaceCulling:
 			std::cout << "FRONT FACE CULLING\n";
+			pRasterizerState = m_pRasterizer->GetRasterizerState(D3D11_CULL_FRONT);
 			break;
 		case CullMode::BackFaceCulling:
 			std::cout << "BACK FACE CULLING\n";
+			pRasterizerState = m_pRasterizer->GetRasterizerState(D3D11_CULL_BACK);
 			break;
 		case CullMode::NoCulling:
 			std::cout << "NO CULLING\n";
+			pRasterizerState = m_pRasterizer->GetRasterizerState(D3D11_CULL_NONE);
 			break;
 		}
 
 		std::cout << "----------------------------\n";
 
 		//Only the vehicle has a cull mode that can be changed
-		m_pVehicleMesh->SetCullMode(m_CullMode);
+		m_pVehicleMesh->SetCullMode(m_CullMode, pRasterizerState);
 	}
 
 	void Renderer::ToggleUniformClearColor()
@@ -372,6 +386,35 @@ namespace dae {
 
 		//Only the vehicle has a render mode that can be changed
 		m_pVehicleMesh->SetRenderMode(m_RenderMode);
+	}
+
+	void Renderer::PrintStartInfo()
+	{
+		system("cls");
+
+		std::cout << "----------------------------\n";
+		std::cout << "SHARED\n" "----------------------------\n";
+		std::cout << "('F1') Toggle between DirectX & Software Rasterizer\n";
+		std::cout << "('F2') Toggle Rotation (On/Off)\n";
+		std::cout << "('F9') Cycle Cull Modes (back-face, front-face, none\n";
+		std::cout << "('F10') Toggle Uniform ClearColor (On/Off)\n";
+		std::cout << "('F11') Toggle Print FPS (On/Off)\n";
+		std::cout << "('F3') Toggle FireFX mesh (On/Off)\n";
+
+		std::cout << "----------------------------\n";
+		std::cout << "HARDWARE\n" "----------------------------\n";
+		std::cout <<  "('F4') Toggle between Texture Sampling States (point-linear-anisotropic)\n";
+
+		std::cout << "----------------------------\n";
+		std::cout << "SOFTWARE\n" "----------------------------\n";
+		std::cout << "('F5') Cycle Shading Mode(Combined / ObservedArea / Diffuse / Specular)\n";
+		std::cout << "('F6') Toggle NormalMap (On/Off)\n";
+		std::cout << "('F7') Toggle DepthBuffer Visualization (On/Off)\n";
+		std::cout << "('F8') Toggle BoundingBox Visualization (On/Off)\n";
+
+		std::cout << "----------------------------\n";
+		std::cout << "EXTRA FEATURE\n" "----------------------------\n";
+		std::cout << "Transparency in Software Rasterizer\n";
 	}
 
 	void Renderer::SetBackColor()

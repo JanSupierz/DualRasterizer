@@ -101,6 +101,11 @@ void Mesh::SetSamplerState(ID3D11SamplerState* pSamplerState)
 	m_pEffect->SetSamplerState(pSamplerState);
 }
 
+void Mesh::SetRasterizerState(ID3D11RasterizerState* pRasterizerState)
+{
+	m_pEffect->SetRasterizerState(pRasterizerState);
+}
+
 void Mesh::SetMatrices(dae::Camera* pCamera)
 {
 	m_pEffect->SetMatrices(pCamera, m_WorldMatrix);

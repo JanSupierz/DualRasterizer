@@ -5,6 +5,7 @@ struct SDL_Surface;
 struct Vertex;
 
 class Sampler;
+class Rasterizer;
 class MeshOpaque;
 class MeshTransparent;
 class Texture;
@@ -45,6 +46,7 @@ namespace dae
 		//	Helper Functions
 		////////////////////////////////////////////////////
 
+		void PrintStartInfo();
 		void SetBackColor();
 
 		////////////////////////////////////////////////////
@@ -103,6 +105,7 @@ namespace dae
 		
 		//Cull Mode
 		CullMode m_CullMode{ CullMode::BackFaceCulling };
+		std::unique_ptr<Rasterizer> m_pRasterizer;
 
 		//Render Mode
 		RenderMode m_RenderMode{ RenderMode::Combined };
@@ -123,5 +126,6 @@ namespace dae
 		//Meshes
 		std::unique_ptr<MeshOpaque> m_pVehicleMesh;
 		std::unique_ptr<MeshTransparent> m_pFireMesh;
+		const float m_AngularSpeed{ 45.f * static_cast<float>(M_PI) / 180.f };
 	};
 }

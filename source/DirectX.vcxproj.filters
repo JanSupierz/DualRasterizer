@@ -76,6 +76,9 @@
     <ClInclude Include="DataTypes.h">
       <Filter>DataTypes</Filter>
     </ClInclude>
+    <ClInclude Include="Rasterizer.h">
+      <Filter>DataTypes</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
@@ -119,6 +122,9 @@
     </ClCompile>
     <ClCompile Include="EffectOpaque.cpp">
       <Filter>DataTypes\Effects</Filter>
+    </ClCompile>
+    <ClCompile Include="Rasterizer.cpp">
+      <Filter>DataTypes</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

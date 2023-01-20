@@ -45,6 +45,13 @@ Effect::Effect(ID3D11Device* pDevice, const std::wstring& assetFile)
 		std::wcout << L"Sampler state not valid\n";
 	}
 
+	m_pRasterizerStateVariable = m_pEffect->GetVariableByName("gRasterizerState")->AsRasterizer();
+
+	if (!m_pRasterizerStateVariable->IsValid())
+	{
+		std::wcout << L"Rasterizer state not valid\n";
+	}
+
 	//-----------------------------------------------------
 	// Vertex Layout								
 	//-----------------------------------------------------
@@ -89,6 +96,11 @@ Effect::~Effect()
 	if (m_pInputLayout)
 	{
 		m_pInputLayout->Release();
+	}
+	
+	if (m_pRasterizerStateVariable)
+	{
+		m_pRasterizerStateVariable->Release();
 	}
 
 	if (m_pSamplerStateVariable)
@@ -143,7 +155,13 @@ void Effect::SetMatrices(dae::Camera* pCamera, const dae::Matrix& worldMatrix)
 void Effect::SetSamplerState(ID3D11SamplerState* pSamplerState)
 {
 	HRESULT hr{ m_pSamplerStateVariable->SetSampler(0, pSamplerState) };
-	if (FAILED(hr)) std::wcout << L"Failed to change sample state";
+	if (FAILED(hr)) std::wcout << L"Failed to change sampler state\n";
+}
+
+void Effect::SetRasterizerState(ID3D11RasterizerState* pRasterizerState)
+{
+	HRESULT hr{ m_pRasterizerStateVariable->SetRasterizerState(0,pRasterizerState) };
+	if (FAILED(hr)) std::wcout << L"Failed to change rasterizer state\n";
 }
 
 ID3DX11Effect* Effect::LoadEffect(ID3D11Device* pDevice, const std::wstring& assetFile)

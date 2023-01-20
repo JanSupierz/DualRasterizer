@@ -37,6 +37,7 @@ public:
 
 	virtual void SetMatrices(dae::Camera* pCamera, const dae::Matrix& worldMatrix);
 	void SetSamplerState(ID3D11SamplerState* pSamplerState);
+	void SetRasterizerState(ID3D11RasterizerState* pRasterizerState);
 
 protected:
 	//-------------------------------------------------
@@ -54,6 +55,7 @@ protected:
 	ID3DX11EffectMatrixVariable* m_pWorldViewProjectionMatrixVariable;
 
 	ID3DX11EffectSamplerVariable* m_pSamplerStateVariable;
+	ID3DX11EffectRasterizerVariable* m_pRasterizerStateVariable;
 
 	dae::Matrix m_WorldViewProjectionMatrix{};
 

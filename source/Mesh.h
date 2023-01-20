@@ -12,19 +12,19 @@ namespace dae
 
 struct Vertex
 {
-	dae::Vector3 position;
-	dae::Vector2 uv;
-	dae::Vector3 normal;
-	dae::Vector3 tangent;
+	dae::Vector3 position{};
+	dae::Vector2 uv{};
+	dae::Vector3 normal{};
+	dae::Vector3 tangent{};
 };
 
 struct VertexOut
 {
-	dae::Vector4 position;
-	dae::Vector2 uv;
-	dae::Vector3 normal;
-	dae::Vector3 tangent;
-	dae::Vector3 viewDirection;
+	dae::Vector4 position{};
+	dae::Vector2 uv{};
+	dae::Vector3 normal{};
+	dae::Vector3 tangent{};
+	dae::Vector3 viewDirection{};
 };
 
 //-----------------------------------------------------
@@ -51,6 +51,7 @@ public:
 	virtual void SoftwareRender(int width, int height, SDL_Surface* pBackBuffer, uint32_t* pBackBufferPixels, float* pDepthBufferPixels) = 0;
 
 	void SetSamplerState(ID3D11SamplerState* pSamplerState);
+	void SetRasterizerState(ID3D11RasterizerState* pRasterizerState);
 	void SetMatrices(dae::Camera* pCamera);
 
 	void Translate(const dae::Vector3& translation);

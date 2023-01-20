@@ -56,6 +56,10 @@ Sampler::~Sampler()
 	}
 }
 
+//---------------------------
+// Member functions
+//---------------------------
+
 ID3D11SamplerState* Sampler::GetSamplerState(D3D11_FILTER filter) const
 {
 	switch (filter)
@@ -71,7 +75,3 @@ ID3D11SamplerState* Sampler::GetSamplerState(D3D11_FILTER filter) const
 		break;
 	}
 }
-
-//---------------------------
-// Member functions
-//---------------------------

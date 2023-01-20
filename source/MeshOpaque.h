@@ -35,7 +35,7 @@ public:
 	void SetSpecularMap(Texture* pSpecularMap);
 	void SetGlossinessMap(Texture* pGlossinessMap);
 
-	void SetCullMode(CullMode cullMode);
+	void SetCullMode(CullMode cullMode, ID3D11RasterizerState* pRasterizerState);
 	void SetUseNormalMap(bool useNormalMap);
 	void SetRenderMode(RenderMode renderMode);
 

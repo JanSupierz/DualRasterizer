@@ -46,12 +46,15 @@ void MeshTransparent::SoftwareRender(int width, int height, SDL_Surface* pBackBu
 			m_VerticesOut[m_Indices[index + 1]].position.z < 0.f || m_VerticesOut[m_Indices[index + 1]].position.z > 1.f ||
 			m_VerticesOut[m_Indices[index + 2]].position.z < 0.f || m_VerticesOut[m_Indices[index + 2]].position.z > 1.f) continue;
 
+		//Discard triangles where two indices are the same
 		if (m_Indices[index] == m_Indices[index + 1] || m_Indices[index] == m_Indices[index + 2] || m_Indices[index + 1] == m_Indices[index + 2]) continue;
 
+		//Vertices
 		const dae::Vector2 v0{ m_VerticesOut[m_Indices[index]].position.GetXY() };
 		const dae::Vector2 v1{ m_VerticesOut[m_Indices[index + 1]].position.GetXY() };
 		const dae::Vector2 v2{ m_VerticesOut[m_Indices[index + 2]].position.GetXY() };
 
+		//Get values for boundingbox
 		dae::Vector2 min{ std::min(v0.x, v1.x),std::min(v0.y, v1.y) };
 		min.x = std::min(min.x, v2.x);
 		min.y = std::min(min.y, v2.y);
@@ -79,13 +82,14 @@ void MeshTransparent::SoftwareRender(int width, int height, SDL_Surface* pBackBu
 				dae::Vector3 vertexRatio{};
 				const bool shouldSwap{ !m_IsTriangleList && index & 0x01 };
 
-				if (!dae::Utils::IsPixelInTriangle(dae::Vector2{ static_cast<float>(px),static_cast<float>(py) }, v0, v1, v2, vertexRatio, shouldSwap, m_CullMode)) continue;
+				if (!dae::Utils::IsPixelInTriangle(dae::Vector2{ static_cast<float>(px),static_cast<float>(py) }, v0, v1, v2, vertexRatio, shouldSwap)) continue;
 
 				//Attribute Interpolation
 				const float currentDepth{ 1.f / ((vertexRatio.x / m_VerticesOut[m_Indices[index]].position.z) + (vertexRatio.y / m_VerticesOut[m_Indices[index + 1]].position.z) + (vertexRatio.z / m_VerticesOut[m_Indices[index + 2]].position.z)) };
 
 				if (currentDepth < pDepthBufferPixels[px + (py * width)])
 				{
+					//Not visible in depth view
 					if (m_ShowDepth)
 					{
 						continue;

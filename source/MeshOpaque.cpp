@@ -49,14 +49,21 @@ void MeshOpaque::SoftwareRender(int width, int height, SDL_Surface* pBackBuffer,
 			m_VerticesOut[m_Indices[index + 1]].position.z < 0.f || m_VerticesOut[m_Indices[index + 1]].position.z > 1.f ||
 			m_VerticesOut[m_Indices[index + 2]].position.z < 0.f || m_VerticesOut[m_Indices[index + 2]].position.z > 1.f) continue;
 
-		//If indices are the same, skip calculation
+		//Discard triangles where two indices are the same
 		if (m_Indices[index] == m_Indices[index + 1] || m_Indices[index] == m_Indices[index + 2] || m_Indices[index + 1] == m_Indices[index + 2]) continue;
 
-		//BoundingBox calculation
+		//Vertices
 		const dae::Vector2 v0{ m_VerticesOut[m_Indices[index]].position.GetXY() };
 		const dae::Vector2 v1{ m_VerticesOut[m_Indices[index + 1]].position.GetXY() };
 		const dae::Vector2 v2{ m_VerticesOut[m_Indices[index + 2]].position.GetXY() };
 
+		//Cullmode
+		const bool shouldSwap{ !m_IsTriangleList && index & 0x01 };
+		const float area{ (shouldSwap ? -1 : 1) * dae::Vector2::Cross(v1 - v0, v2 - v0) };
+
+		if ((m_CullMode == CullMode::FrontFaceCulling && area > 0.f) || (m_CullMode == CullMode::BackFaceCulling && area < 0.f)) continue;
+
+		//Get values for boundingbox
 		dae::Vector2 min{ std::min(v0.x, v1.x),std::min(v0.y, v1.y) };
 		min.x = std::min(min.x, v2.x);
 		min.y = std::min(min.y, v2.y);
@@ -64,7 +71,6 @@ void MeshOpaque::SoftwareRender(int width, int height, SDL_Surface* pBackBuffer,
 		dae::Vector2 max{ std::max(v0.x, v1.x),std::max(v0.y, v1.y) };
 		max.x = std::max(max.x, v2.x);
 		max.y = std::max(max.y, v2.y);
-
 
 		//RENDER LOGIC
 		for (int px{ std::max(0,static_cast<int>(min.x)) }; px <= std::min(width - 1, static_cast<int>(max.x)); ++px)
@@ -83,9 +89,7 @@ void MeshOpaque::SoftwareRender(int width, int height, SDL_Surface* pBackBuffer,
 
 				//Rasterization
 				dae::Vector3 vertexRatio{};
-				const bool shouldSwap{ !m_IsTriangleList && index & 0x01 };
-
-				if (!dae::Utils::IsPixelInTriangle(dae::Vector2{ static_cast<float>(px),static_cast<float>(py) }, v0, v1, v2, vertexRatio, shouldSwap,m_CullMode)) continue;
+				if (!dae::Utils::IsPixelInTriangle(dae::Vector2{ static_cast<float>(px),static_cast<float>(py) }, v0, v1, v2, vertexRatio, shouldSwap)) continue;
 
 				//Attribute Interpolation
 				const float currentDepth{ 1.f / ((vertexRatio.x / m_VerticesOut[m_Indices[index]].position.z) + (vertexRatio.y / m_VerticesOut[m_Indices[index + 1]].position.z) + (vertexRatio.z / m_VerticesOut[m_Indices[index + 2]].position.z)) };
@@ -162,9 +166,10 @@ void MeshOpaque::SetGlossinessMap(Texture* pGlossinessMap)
 	static_cast<EffectOpaque*>(m_pEffect.get())->SetGlossinessMap(pGlossinessMap);
 }
 
-void MeshOpaque::SetCullMode(CullMode cullMode)
+void MeshOpaque::SetCullMode(CullMode cullMode, ID3D11RasterizerState* pRasterizerState )
 {
 	m_CullMode = cullMode;
+	m_pEffect->SetRasterizerState(pRasterizerState);
 }
 
 void MeshOpaque::SetUseNormalMap(bool useNormalMap)
